@@ -1,3 +1,8 @@
 This is a contracted project for Cherry Hill Ice Cream in Lunenburg that consists of a webapp using JS, Flask, and SQL
 
 The second aspect of the project is developing an app for the Clover POS system
+
+
+source virtFlask/Scripts/activate
+"export FLASK_ENV=development"
+"export FLASK_APP=herro.py"
