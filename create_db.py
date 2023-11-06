@@ -4,7 +4,7 @@ mydb =mysql.connector.connect(host='localhost', user="Shep", passwd = "1max2well
 
 my_cursor = mydb.cursor()
 
-# my_cursor.execute("CREATE DATABASE our_users")
+# my_cursor.execute("CREATE DATABASE conflicts")
 
 my_cursor.execute("SHOW DATABASES")
 

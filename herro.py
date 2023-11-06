@@ -1,6 +1,6 @@
 from flask import Flask, render_template, flash, request
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField
+from wtforms import StringField, SubmitField, DateField, SelectField, DateTimeField
 from wtforms.validators import DataRequired
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -26,6 +26,8 @@ app = Flask(__name__)
 
 # New MySQL db 'mysql://username:password@localhost/db_name'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://Shep:1max2well3@localhost/our_users'
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://Shep:1max2well3@localhost/conflicts'
 # create a Form Class
 app.config['SECRET_KEY'] = "Key"
 
@@ -44,6 +46,22 @@ class Users(db.Model):
         return '<Name %r>' % self.name
     
 
+# Create Model
+class Conflicts(db.Model):
+    conflictNumber = db.Column(db.Integer, primary_key = True)
+    id = db.Column(db.Integer)
+    dt = db.Column(db.DateTime)
+    name = db.Column(db.String(100), nullable=False)
+    conflictStart = db.Column(db.String(100), nullable=False)
+    conflictEnd = db.Column(db.String(100), nullable=False) 
+    frequency = db.Column(db.String(100), nullable=False)
+    endDate = db.Column(db.DateTime, nullable=True)
+
+    def __repr__(self):
+        return '<Name %r>' % self.name
+
+    
+
 class UserForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired()])
     email = StringField("Email", validators=[DataRequired()])
@@ -54,6 +72,15 @@ class NamerForm(FlaskForm):
     name = StringField("What's your name", validators=[DataRequired()])
     submit = SubmitField("Submit")
 
+
+class AvailabilityForm(FlaskForm):
+    name = StringField("Name", validators=[DataRequired()])
+    date = DateField("Date of Conflict", validators=[DataRequired()], format='%Y-%m-%d')
+    startTime1 = StringField("Start Time", validators=[DataRequired()])
+    endTime1 = StringField("End Time", validators=[DataRequired()])
+    frequency = SelectField("How Often", choices = ['Once', 'Daily', 'Daily--Weekdays', 'Daily--Weekends', 'Weekly'], validators=[DataRequired()])
+    endDate = DateField("Last Day of Conflict (Optional)", format='%Y-%m-%d')
+    submit = SubmitField("Submit")
 
 # Update Database
 @app.route('/update/<int:id>', methods = ['POST', 'GET'])
@@ -118,6 +145,71 @@ def name():
         flash("Name Submitted Successfully")
     
     return render_template("name.html", name = name, form = form)
+
+@app.route('/availability', methods = ['GET', 'POST'])
+def availability():
+    # get info from logged in person
+    # display that info on screen, begin with hardcoded variables
+    # for side by side fillables: https://getbootstrap.com/docs/3.4/css/
+
+    name = ''
+    form = AvailabilityForm()
+    
+    if form.validate_on_submit():
+        # no data for daily, just add a new conflict for each potential date
+        '''
+        if form.frequency.data == 'Daily':
+            while not (form.endDate.data == tempDate):
+                conflict = Conflicts(name=form.name.data, dt=form.date.data, conflictStart=form.startTime1.data,
+                         conflictEnd=form.endTime1.data, frequency=form.frequency.data, endDate = form.endDate.data)
+                tempDate.next() # everyday
+                db.session.add(conflict)
+        
+        elif form.frequency.data == 'Weekly':
+            while not (form.endDate.data == tempDate):
+                conflict = Conflicts(name=form.name.data, dt=form.date.data, conflictStart=form.startTime1.data,
+                         conflictEnd=form.endTime1.data, frequency=form.frequency.data, endDate = form.endDate.data)
+                tempDate.next() # once a week on that day
+                db.session.add(conflict)
+            
+        elif form.frequency.data == 'Daily--Weekdays':
+            while not (form.endDate.data == tempDate):
+                conflict = Conflicts(name=form.name.data, dt=form.date.data, conflictStart=form.startTime1.data,
+                         conflictEnd=form.endTime1.data, frequency=form.frequency.data, endDate = form.endDate.data)
+                tempDate.next() # once a week on that day
+                db.session.add(conflict)
+        
+        elif form.frequency.data == 'Daily--Weekends':
+            while not (form.endDate.data == tempDate):
+                conflict = Conflicts(name=form.name.data, dt=form.date.data, conflictStart=form.startTime1.data,
+                         conflictEnd=form.endTime1.data, frequency=form.frequency.data, endDate = form.endDate.data)
+                tempDate.next() # once a week on that day
+                db.session.add(conflict)
+        
+        else:
+            conflict = Conflicts(name=form.name.data, dt=form.date.data, conflictStart=form.startTime1.data,
+                    conflictEnd=form.endTime1.data, frequency=form.frequency.data, endDate = form.endDate.data)
+            db.session.add(conflict)
+            
+        db.session.commit()
+        '''
+        conflict = Conflicts(name=form.name.data, dt=form.date.data, conflictStart=form.startTime1.data,
+                         conflictEnd=form.endTime1.data, frequency=form.frequency.data, endDate = form.endDate.data)
+        db.session.add(conflict)
+        db.session.commit()
+        
+        form.startTime1.data = ''
+        form.endTime1.data = ''
+        form.date.data = ''
+        form.endDate.data = ''
+        form.frequency.data = ''
+        
+        flash("Conflict Added")
+
+    current_Conflicts = Conflicts.query.order_by(Conflicts.conflictNumber)
+
+    return render_template("availability.html", name = name, form = form, current_Conflicts = current_Conflicts)
+
 
 # custom error pages
 
